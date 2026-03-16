@@ -5,15 +5,25 @@ namespace App\Repository;
 use App\Entity\Project;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use App\DTO\SearchRequestDTO;
+use App\DTO\PaginatedResult;
+use App\Service\RetrieveDataService;
 
 /**
  * @extends ServiceEntityRepository<Project>
  */
 class ProjectRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    public function __construct(ManagerRegistry $registry, private RetrieveDataService $service)
     {
         parent::__construct($registry, Project::class);
+    }
+
+    public function retrieveData(SearchRequestDTO $search): PaginatedResult
+    {
+        $qb = $this->createQueryBuilder('p');
+
+        return $this->service->execute($qb, $search);
     }
 
     //    /**

@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ORM\Entity(repositoryClass: EmployeeRepository::class)]
 #[ORM\Table(name: 'employees')]
@@ -16,36 +17,40 @@ class Employee
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['employee:list', 'company:detail', 'project:detail'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
+    #[Groups(['employee:list', 'company:detail', 'project:detail'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
+    #[Groups(['employee:list', 'company:detail', 'project:detail'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
     #[Assert\Email]
+    #[Groups(['employee:list'])]
     private ?string $email = null;
 
     #[ORM\Column(enumType: EmployeePosition::class)]
+    #[Groups(['employee:list'])]
     private ?EmployeePosition $position = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $photo = null;
-
     #[ORM\ManyToOne(inversedBy: 'employees')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['employee:detail'])]
     private ?Company $company = null;
 
     #[ORM\ManyToMany(targetEntity: Project::class, mappedBy: 'employees')]
+    #[Groups(['employee:detail'])]
     private Collection $projects;
 
     #[ORM\OneToOne(inversedBy: 'employee')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: true)]
     private ?User $user = null;
 
     public function __construct()
@@ -106,14 +111,14 @@ class Employee
         return $this;
     }
 
-    public function getPhoto(): ?string
+    public function getUser(): ?User
     {
-        return $this->photo;
+        return $this->user;
     }
 
-    public function setPhoto(?string $photo): static
+    public function setUser(User $user): static
     {
-        $this->photo = $photo;
+        $this->user = $user;
 
         return $this;
     }
@@ -133,5 +138,25 @@ class Employee
     public function getProjects(): Collection
     {
         return $this->projects;
+    }
+
+    public function addProject(Project $project): static
+    {
+        if (!$this->projects->contains($project)) {
+            $this->projects->add($project);
+        }
+
+        return $this;
+    }
+
+    public function removeProject(Project $project): static
+    {
+        if ($this->projects->removeElement($project)) {
+            if ($project->getEmployees()->contains($this)) {
+                $project->removeEmployee($this);
+            }
+        }
+
+        return $this;
     }
 }

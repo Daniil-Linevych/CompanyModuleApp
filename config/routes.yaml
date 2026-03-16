@@ -9,6 +9,8 @@
 
 controllers:
     resource: routing.controllers
+    type: attribute
+    prefix: /api
 
 api_login:
     path: /api/login
